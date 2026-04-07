@@ -1,0 +1,75 @@
+{
+  "assetId": "advisor-email-draft-en",
+  "scenarioId": "email_draft_review",
+  "matching": {
+    "any": [
+      "advisor",
+      "professor"
+    ],
+    "all": [
+      "email"
+    ],
+    "not": [
+      "flight",
+      "hotel",
+      "travel",
+      "booking"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "Please read the relevant context first, write the email draft down for me to review, and do not send anything yet.",
+      "example": {
+        "user": [
+          "Draft an email to my advisor about this week's experiment revision.",
+          "Keep it formal, keep it short, and show me the draft before sending."
+        ],
+        "assistant": "Email draft:\nSubject: Update on this week's experiment revision\nBody:\nDear Professor Mario,\n\nI have finished the latest revision of the experiment section and incorporated the updated methods and results into the draft. The revised version is ready for your review.\n\nCould we schedule a short meeting this week to discuss the remaining issues and confirm the next steps? I would be happy to revise the draft further based on your feedback.\n\nBest regards,\n[Your Name]\n\nPlease review before sending."
+      }
+    },
+    {
+      "check": "contains:advisor",
+      "inject": "Please use a formal academic tone and clearly state my progress update and next step."
+    },
+    {
+      "check": "contains:professor",
+      "inject": "Please address the recipient with their title and surname."
+    },
+    {
+      "check": "!contains:detailed",
+      "inject": "Please keep it to at most three short paragraphs."
+    }
+  ],
+  "processControl": [
+    {
+      "when": "!done:read",
+      "then": "require:read",
+      "reason": "Read the relevant background before drafting so the email uses the right names, status, and request."
+    },
+    {
+      "when": "!done:read",
+      "then": "forbid:write",
+      "reason": "Do not write the draft before the source context has been read."
+    },
+    {
+      "when": {
+        "AND": [
+          "done:read",
+          "!done:write"
+        ]
+      },
+      "then": "require:write",
+      "reason": "Save the draft before replying so the user can review a concrete written version."
+    }
+  ],
+  "outputControl": [
+    {
+      "check": "!contains:Sent",
+      "rewrite": "Do not claim that the email has already been sent."
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 96
+}

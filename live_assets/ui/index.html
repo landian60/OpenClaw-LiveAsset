@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenClaw-LiveAsset</title>
+<style>
+  :root { --bg: #fafbfc; --fg: #1a202c; --border: #e2e8f0; --accent: #4299e1; --muted: #718096; --card: #fff; --tag: #edf2f7; --ok: #38a169; --err: #e53e3e; --require: #bee3f8; --forbid: #fed7d7; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1a202c; --fg: #e2e8f0; --border: #4a5568; --accent: #63b3ed; --muted: #a0aec0; --card: #2d3748; --tag: #4a5568; --ok: #68d391; --err: #fc8181; --require: #2a4365; --forbid: #742a2a; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); padding: 1rem; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+  h3 { font-size: 0.95rem; margin: 0.75rem 0 0.25rem; }
+  .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .header button { padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.85rem; }
+  .header button:hover { border-color: var(--accent); }
+  .status { font-size: 0.85rem; color: var(--muted); }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1rem; }
+  .tab { padding: 0.5rem 1rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 0.9rem; color: var(--muted); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab:hover { color: var(--fg); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Chat */
+  #chat-messages { min-height: 200px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; background: var(--card); }
+  .msg { margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 6px; }
+  .msg.user { background: var(--tag); }
+  .msg.assistant { background: var(--card); border: 1px solid var(--border); }
+  .msg-role { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 0.2rem; }
+  .msg-text { white-space: pre-wrap; line-height: 1.5; }
+  .compose { display: flex; gap: 0.5rem; }
+  .compose input { flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: var(--card); color: var(--fg); }
+  .compose button { padding: 0.5rem 1rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; font-size: 0.9rem; }
+  .compose button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .save-btn { margin-top: 0.5rem; padding: 0.4rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.85rem; }
+  .save-btn:hover { background: var(--accent); color: #fff; }
+
+  /* Trace */
+  .trace { margin-top: 0.75rem; padding: 0.75rem; border: 1px solid var(--accent); border-radius: 8px; background: var(--card); max-height: 300px; overflow-y: auto; }
+  .trace-header { display: flex; align-items: center; justify-content: space-between; }
+  .trace-delete { padding: 0.2rem 0.5rem; border: 1px solid var(--err); border-radius: 4px; background: transparent; color: var(--err); cursor: pointer; font-size: 0.75rem; }
+  .trace-delete:hover { background: var(--err); color: #fff; }
+  .trace-badge { display: inline-block; padding: 0.15rem 0.5rem; background: var(--accent); color: #fff; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+  .trace-section { margin-top: 0.5rem; }
+  .trace-section h3 { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; }
+  .trace-rule { display: inline-block; padding: 0.1rem 0.3rem; background: var(--tag); border-radius: 3px; font-size: 0.8rem; margin: 0.1rem; }
+  .trace-constraint { display: inline-block; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; }
+  .trace-constraint.require { background: var(--require); }
+  .trace-constraint.forbid { background: var(--forbid); }
+  .trace-tool { font-family: monospace; font-size: 0.8rem; }
+  .trace-details, .asset-json-details, .session-details { margin-top: 0.5rem; }
+  .trace-details summary, .asset-json-details summary, .session-details summary { cursor: pointer; font-size: 0.82rem; color: var(--muted); }
+  .trace-rule-list { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+  .trace-rule-card { border: 1px solid var(--border); border-radius: 6px; background: var(--card); padding: 0.55rem; }
+  .trace-pre { margin-top: 0.2rem; padding: 0.45rem 0.55rem; border-radius: 6px; background: var(--tag); white-space: pre-wrap; line-height: 1.45; font-size: 0.8rem; }
+  .asset-json { margin-top: 0.4rem; padding: 0.55rem; border-radius: 6px; background: var(--tag); white-space: pre-wrap; overflow-x: auto; font-size: 0.8rem; line-height: 1.45; }
+  .session-event { margin-top: 0.5rem; padding: 0.55rem; border: 1px solid var(--border); border-radius: 6px; background: var(--tag); }
+  .session-event-title { font-size: 0.82rem; font-weight: 600; }
+  .session-event-meta { margin-top: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+
+  /* Baseline */
+  .baseline-toggle { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; }
+  .baseline-box { margin-top: 0.5rem; padding: 0.5rem; border: 1px dashed var(--border); border-radius: 6px; background: var(--tag); white-space: pre-wrap; line-height: 1.5; max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
+
+  /* Assets list */
+  .asset-card { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; background: var(--card); }
+  .asset-card:hover { border-color: var(--accent); }
+  .asset-card.open, .asset-card[open] { border-color: var(--accent); }
+  .asset-card.static { cursor: default; }
+  .asset-card.static:hover { border-color: var(--accent); }
+  .asset-summary { display: block; list-style: none; cursor: pointer; }
+  .asset-summary::-webkit-details-marker { display: none; }
+  .asset-summary::marker { content: ""; }
+  .asset-header { display: flex; align-items: center; gap: 0.5rem; }
+  .asset-header-main { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+  .asset-summary::before { content: '▸'; color: var(--muted); margin-right: 0.5rem; }
+  .asset-card[open] > .asset-summary::before { content: '▾'; }
+  .asset-id { font-weight: 600; }
+  .asset-version { font-size: 0.8rem; color: var(--muted); }
+  .asset-keywords-line { margin-top: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+  .asset-detail { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; }
+  .asset-detail h3 { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+  .asset-detail ul { padding-left: 1.2rem; }
+  .asset-detail code { background: var(--tag); padding: 0.1rem 0.25rem; border-radius: 3px; font-size: 0.85rem; }
+  .asset-example { margin-top: 0.35rem; padding: 0.45rem 0.55rem; border-radius: 6px; background: var(--tag); white-space: pre-wrap; line-height: 1.45; }
+  .asset-example-label { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+  .generated-preview { margin-top: 1rem; }
+  .asset-chip { display: inline-block; padding: 0.12rem 0.4rem; margin: 0.12rem 0.18rem 0 0; border-radius: 999px; background: var(--tag); font-size: 0.78rem; }
+  .asset-chip.all { background: var(--require); }
+  .asset-chip.not { background: var(--forbid); }
+  .validation-ok { color: var(--ok); }
+  .validation-fail { color: var(--err); }
+  .asset-editor { margin-top: 0.75rem; }
+  .asset-editor summary { cursor: pointer; font-size: 0.82rem; color: var(--muted); }
+  .asset-editor textarea { width: 100%; min-height: 280px; margin-top: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--tag); color: var(--fg); font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0.7rem; resize: vertical; }
+  .asset-editor textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .asset-editor-actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.55rem; }
+  .asset-editor-actions button { padding: 0.38rem 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; font-size: 0.82rem; }
+  .asset-editor-actions button:hover { border-color: var(--accent); }
+  .asset-editor-actions button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .asset-editor-status { font-size: 0.8rem; color: var(--muted); }
+  .asset-editor-status.ok { color: var(--ok); }
+  .asset-editor-status.err { color: var(--err); }
+
+  /* Sessions */
+  .session-card { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; background: var(--card); }
+  .session-badge { font-size: 0.75rem; padding: 0.1rem 0.3rem; border-radius: 3px; }
+  .session-badge.done { background: #c6f6d5; color: #22543d; }
+  .log-entry { font-size: 0.8rem; font-family: monospace; }
+  .log-ok { color: var(--ok); }
+  .log-err { color: var(--err); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>OpenClaw-LiveAsset</h1>
+  <span class="status" id="status">Loading...</span>
+  <button onclick="refresh()">Refresh</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="chat" onclick="switchTab('chat')">Chat</div>
+  <div class="tab" data-tab="assets" onclick="switchTab('assets')">Assets</div>
+  <div class="tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</div>
+</div>
+
+<div id="panel-chat" class="panel active">
+  <div id="chat-messages"></div>
+  <div id="chat-trace"></div>
+  <div class="compose">
+    <input id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+    <button onclick="sendMsg()" id="send-btn">Send</button>
+  </div>
+  <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+    <button class="save-btn" onclick="saveAsAsset()" id="save-btn" style="display:none">Save as Asset</button>
+    <label class="baseline-toggle"><input type="checkbox" id="baseline-check" onchange="toggleBaseline()"> Show baseline</label>
+  </div>
+  <div id="baseline-box" style="display:none"></div>
+  <div id="generated-asset" class="generated-preview"></div>
+</div>
+
+<div id="panel-assets" class="panel">
+  <div id="assets-list"></div>
+</div>
+
+<div id="panel-sessions" class="panel">
+  <div id="sessions-list"></div>
+</div>
+
+<script>
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+const AGENT_PARAM = new URLSearchParams(location.search).get('agent') || '';
+const BASE = location.origin;
+const UI_SESSION_STORAGE_KEY = 'live-assets-ui-session-key';
+function normalizeAgentId(value) {
+  const trimmed = String(value || '').trim().toLowerCase();
+  if (!trimmed) return 'main';
+  if (/^[a-z0-9][a-z0-9_-]{0,63}$/.test(trimmed)) return trimmed;
+  const normalized = trimmed
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
+    .slice(0, 64);
+  return normalized || 'main';
+}
+const UI_AGENT_ID = normalizeAgentId(AGENT_PARAM || 'main');
+const UI_SESSION_PREFIX = 'agent:' + UI_AGENT_ID + ':live-assets-ui:';
+const messages = [];
+let currentTrace = null;
+let lastGeneratedAsset = null;
+
+function ensureUiSessionKey() {
+  const existing = sessionStorage.getItem(UI_SESSION_STORAGE_KEY);
+  if (existing) return existing;
+  if (!globalThis.crypto?.randomUUID) {
+    throw new Error('crypto.randomUUID unavailable');
+  }
+  const created = UI_SESSION_PREFIX + globalThis.crypto.randomUUID();
+  sessionStorage.setItem(UI_SESSION_STORAGE_KEY, created);
+  return created;
+}
+
+const uiSessionKey = ensureUiSessionKey();
+const assetDrafts = {};
+const assetSaveStatus = {};
+let loadedAssets = [];
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+  if (tab === 'assets') loadAssets();
+  if (tab === 'sessions') loadSessions();
+}
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const resp = await fetch(BASE + path, { ...opts, headers });
+  return resp.json();
+}
+
+async function refresh() {
+  try {
+    const assets = await api('/live-assets/assets');
+    document.getElementById('status').textContent = assets.length + ' assets loaded';
+  } catch(e) {
+    document.getElementById('status').textContent = 'Error: ' + e.message;
+  }
+}
+
+function renderMessages() {
+  const el = document.getElementById('chat-messages');
+  el.innerHTML = messages.map(m =>
+    '<div class="msg ' + m.role + '"><div class="msg-role">' + m.role + '</div><div class="msg-text">' + escHtml(m.content) + '</div></div>'
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+  document.getElementById('save-btn').style.display = messages.length >= 2 ? '' : 'none';
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function formatTraceValue(value) {
+  if (value == null || value === '') return '';
+  return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
+function renderConstraintCards(rules) {
+  if (!rules?.length) return '';
+  return '<div class="trace-rule-list">' + rules.map((rule, index) => {
+    const action = rule.then || rule.action || '';
+    const reason = typeof rule.reason === 'string' ? rule.reason : '';
+    const when = formatTraceValue(rule.when);
+    return '<div class="trace-rule-card">'
+      + '<div><span class="asset-example-label">Rule ' + (index + 1) + '</span> <code>' + escHtml(action) + '</code></div>'
+      + (reason ? '<div><span class="asset-example-label">Reason</span><div class="trace-pre">' + escHtml(reason) + '</div></div>' : '')
+      + (when ? '<div><span class="asset-example-label">When</span><pre class="trace-pre">' + escHtml(when) + '</pre></div>' : '')
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function renderConstraintDetails(title, rules, opts = {}) {
+  if (!rules?.length) return '';
+  return '<details class="' + escHtml(opts.className || 'trace-details') + '" onclick="event.stopPropagation()"' + (opts.open ? ' open' : '') + '>'
+    + '<summary onclick="event.stopPropagation()">' + escHtml(title) + ' (' + rules.length + ')</summary>'
+    + renderConstraintCards(rules)
+    + '</details>';
+}
+
+function renderAssetJson(asset) {
+  const { filePath, ...payload } = asset || {};
+  return '<details class="asset-json-details" onclick="event.stopPropagation()">'
+    + '<summary onclick="event.stopPropagation()">Asset JSON</summary><pre class="asset-json">'
+    + escHtml(JSON.stringify(payload, null, 2))
+    + '</pre></details>';
+}
+
+function renderMatchingSection(matching) {
+  if (!matching) return '';
+  const renderGroup = (label, values, cls = '') =>
+    values?.length
+      ? '<div><span class="asset-example-label">' + escHtml(label) + '</span> '
+        + values.map(v => '<span class="asset-chip ' + cls + '">' + escHtml(v) + '</span>').join('')
+        + '</div>'
+      : '';
+  const html = renderGroup('Any', matching.any || [])
+    + renderGroup('All', matching.all || [], 'all')
+    + renderGroup('Not', matching.not || [], 'not');
+  return html ? '<h3>Matching</h3>' + html : '';
+}
+
+function renderInputRules(rules) {
+  if (!rules?.length) return '';
+  return '<h3>Input Control</h3><ul>' + rules.map(rule => {
+    let exampleHtml = '';
+    if (Array.isArray(rule.example) && rule.example.length) {
+      exampleHtml = '<div class="asset-example">' + rule.example.map(m =>
+        '<div' + (m.role === 'assistant' ? ' style="margin-top:0.25rem"' : '') + '>'
+        + '<span class="asset-example-label">' + escHtml(m.role === 'user' ? 'User' : 'Assistant') + '</span> '
+        + escHtml(m.content || '') + '</div>'
+      ).join('') + '</div>';
+    }
+    const checkLabel = (rule.check || '').trim() ? escHtml(rule.check) : '<em>always</em>';
+    return '<li><code>' + checkLabel + '</code> → ' + escHtml(rule.inject || '') + exampleHtml + '</li>';
+  }).join('') + '</ul>';
+}
+
+function renderProcessConstraints(processControl) {
+  const constraints = Array.isArray(processControl) ? processControl : (processControl?.constraints || []);
+  if (!constraints.length) return '';
+  return '<h3>Process Control</h3>'
+    + '<div>' + constraints.map(c => {
+      const cls = String(c.then || '').startsWith('require') ? 'require' : 'forbid';
+      return '<span class="trace-constraint ' + cls + '">' + escHtml(c.then || '') + '</span> ';
+    }).join('') + '</div>'
+    + renderConstraintDetails('Process Rules', constraints);
+}
+
+function renderOutputRules(rules) {
+  if (!rules?.length) return '';
+  return '<h3>Output Control</h3><ul>' + rules.map(r =>
+    '<li><code>' + escHtml(r.check) + '</code>' + (r.rewrite ? ' → ' + escHtml(r.rewrite) : '') + '</li>'
+  ).join('') + '</ul>';
+}
+
+function renderTools(tools) {
+  if (!tools?.length) return '';
+  return '<h3>Tools</h3><ul>' + tools.map(t =>
+    '<li><code>' + escHtml(t.name) + '</code> — ' + escHtml(t.description || '') + '</li>'
+  ).join('') + '</ul>';
+}
+
+function renderScenarioList(title, items) {
+  if (!items?.length) return '';
+  return '<h3>' + escHtml(title) + '</h3><ul>' + items.map(item => '<li>' + escHtml(item) + '</li>').join('') + '</ul>';
+}
+
+function renderValidation(validation) {
+  const results = validation?.results || [];
+  if (!results.length) return '';
+  return '<h3>Match Validation</h3><ul>' + results.map(item =>
+    '<li class="' + (item.ok ? 'validation-ok' : 'validation-fail') + '">'
+      + (item.ok ? '✓ ' : '✗ ')
+      + escHtml(item.scenario || '')
+      + ' [' + (item.expected ? 'should match' : 'should not match') + ']'
+      + '</li>'
+  ).join('') + '</ul>';
+}
+
+function renderAssetDetail(a, opts = {}) {
+  return renderMatchingSection(a.matching)
+    + renderInputRules(a.inputControl)
+    + renderProcessConstraints(a.processControl)
+    + renderOutputRules(a.outputControl)
+    + renderTools(a.tools)
+    + (opts.includeDebug ? renderScenarioList('Positive Scenarios', a._positive_scenarios) : '')
+    + (opts.includeDebug ? renderScenarioList('Negative Scenarios', a._negative_scenarios) : '')
+    + (opts.includeDebug ? renderValidation(a._match_validation) : '')
+    + (opts.editable ? renderAssetEditor(a) : renderAssetJson(a));
+}
+
+function editableAssetPayload(asset) {
+  const { filePath, ...payload } = asset || {};
+  return payload;
+}
+
+function getAssetDraft(asset) {
+  if (!asset?.assetId) return '';
+  return assetDrafts[asset.assetId] || JSON.stringify(editableAssetPayload(asset), null, 2);
+}
+
+function renderAssetEditor(asset) {
+  const assetId = asset.assetId;
+  const draft = getAssetDraft(asset);
+  const status = assetSaveStatus[assetId];
+  const statusHtml = status?.text
+    ? '<span id="asset-editor-status-' + escHtml(assetId) + '" class="asset-editor-status ' + escHtml(status.kind || '') + '">' + escHtml(status.text) + '</span>'
+    : '<span id="asset-editor-status-' + escHtml(assetId) + '" class="asset-editor-status">Edit JSON and save to overwrite this asset.</span>';
+  return '<details class="asset-editor" onclick="event.stopPropagation()">'
+    + '<summary onclick="event.stopPropagation()">Asset JSON</summary>'
+    + '<textarea id="asset-editor-' + escHtml(assetId) + '" spellcheck="false" autocapitalize="off" autocorrect="off" onclick="event.stopPropagation()" oninput="handleAssetDraftInput(\'' + escHtml(assetId) + '\', this.value)">' + escHtml(draft) + '</textarea>'
+    + '<div class="asset-editor-actions" onclick="event.stopPropagation()">'
+    + '<button class="primary" onclick="saveAssetDraft(\'' + escHtml(assetId) + '\')">Save</button>'
+    + '<button onclick="resetAssetDraft(\'' + escHtml(assetId) + '\')">Reset</button>'
+    + statusHtml
+    + '</div>'
+    + '</details>';
+}
+
+function setAssetEditorStatus(assetId, status) {
+  assetSaveStatus[assetId] = status;
+  const el = document.getElementById('asset-editor-status-' + assetId);
+  if (!el) return;
+  el.className = 'asset-editor-status' + (status?.kind ? ' ' + status.kind : '');
+  el.textContent = status?.text || 'Edit JSON and save to overwrite this asset.';
+}
+
+function renderAssetCard(a, opts = {}) {
+  const kws = [...(a.matching?.any || []), ...(a.matching?.all || []).map(k => '[all]' + k)].join(', ');
+  const deleteButton = opts.deleteButton === false
+    ? ''
+    : '<button class="trace-delete" style="margin-left:auto" onclick="event.preventDefault();event.stopPropagation();deleteAsset(\'' + escHtml(a.assetId) + '\').then(()=>loadAssets())">Delete</button>';
+  const detail = '<div class="asset-detail" onclick="event.stopPropagation()">'
+    + renderAssetDetail(a, { includeDebug: Boolean(opts.includeDebug), editable: Boolean(opts.editable) })
+    + '</div>';
+  if (opts.collapsible === false) {
+    return '<div class="asset-card open static">'
+      + '<div class="asset-header"><div class="asset-header-main"><span class="asset-id">' + escHtml(a.assetId) + '</span><span class="asset-version">v' + escHtml(String(a.version || 1)) + '</span></div>'
+      + deleteButton + '</div>'
+      + '<div class="asset-keywords-line">' + escHtml(kws) + '</div>'
+      + detail
+      + '</div>';
+  }
+  return '<details class="asset-card"' + (opts.open ? ' open' : '') + '>'
+    + '<summary class="asset-summary">'
+    + '<div class="asset-header"><div class="asset-header-main"><span class="asset-id">' + escHtml(a.assetId) + '</span><span class="asset-version">v' + escHtml(String(a.version || 1)) + '</span></div>'
+    + deleteButton + '</div>'
+    + '<div class="asset-keywords-line">' + escHtml(kws) + '</div>'
+    + '</summary>'
+    + detail
+    + '</details>';
+}
+
+function renderGeneratedAsset() {
+  const el = document.getElementById('generated-asset');
+  if (!lastGeneratedAsset) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = '<h2>Generated Asset</h2>' + renderAssetCard(lastGeneratedAsset, {
+    open: true,
+    collapsible: false,
+    deleteButton: false,
+    includeDebug: true,
+    editable: false,
+  });
+}
+
+function handleAssetDraftInput(assetId, value) {
+  assetDrafts[assetId] = value;
+  setAssetEditorStatus(assetId, { kind: '', text: 'Unsaved changes' });
+}
+
+function resetAssetDraft(assetId) {
+  delete assetDrafts[assetId];
+  delete assetSaveStatus[assetId];
+  loadAssets();
+}
+
+async function saveAssetDraft(assetId) {
+  const editor = document.getElementById('asset-editor-' + assetId);
+  if (!editor) {
+    showToast('Asset editor not found: ' + assetId, true);
+    return;
+  }
+  const draft = editor.value;
+  assetDrafts[assetId] = draft;
+  let payload;
+  try {
+    payload = JSON.parse(draft);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('asset JSON must be an object');
+    }
+  } catch (e) {
+    setAssetEditorStatus(assetId, { kind: 'err', text: 'Invalid JSON: ' + e.message });
+    showToast('Invalid JSON for ' + assetId + ': ' + e.message, true);
+    return;
+  }
+
+  setAssetEditorStatus(assetId, { kind: '', text: 'Saving...' });
+  try {
+    const resp = await api('/live-assets/save', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!resp.saved) {
+      throw new Error(resp.error || 'save failed');
+    }
+    assetDrafts[assetId] = JSON.stringify(payload, null, 2);
+    setAssetEditorStatus(assetId, { kind: 'ok', text: 'Saved to ' + (resp.filePath || assetId) });
+    if (lastGeneratedAsset?.assetId === assetId) {
+      lastGeneratedAsset = { ...payload, filePath: resp.filePath || lastGeneratedAsset.filePath };
+      renderGeneratedAsset();
+    }
+    await loadAssets();
+    await refresh();
+    showToast('Saved asset: ' + assetId, false);
+  } catch (e) {
+    setAssetEditorStatus(assetId, { kind: 'err', text: 'Save failed: ' + e.message });
+    showToast('Save failed: ' + e.message, true);
+  }
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  messages.push({ role: 'user', content: text });
+  renderMessages();
+
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Thinking...';
+  const loadingMsg = { role: 'assistant', content: '...' };
+  messages.push(loadingMsg);
+  renderMessages();
+  try {
+    const data = await api('/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'x-openclaw-agent-id': UI_AGENT_ID,
+        'x-openclaw-session-key': uiSessionKey,
+      },
+      body: JSON.stringify({ model: 'default', messages: messages.filter(m => m !== loadingMsg).map(m => ({ role: m.role, content: m.content })) }),
+    });
+    const reply = data.choices?.[0]?.message?.content || '(empty)';
+    messages[messages.length - 1] = { role: 'assistant', content: reply };
+    renderMessages();
+    await loadTrace(text);
+  } catch(e) {
+    messages[messages.length - 1] = { role: 'assistant', content: '[Error] ' + e.message };
+    renderMessages();
+  }
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Send';
+}
+
+async function loadTrace(query) {
+  try {
+    currentTrace = await api('/live-assets/trace', { method: 'POST', body: JSON.stringify({ query }) });
+    renderTrace();
+  } catch { currentTrace = null; renderTrace(); }
+}
+
+async function deleteAsset(assetId) {
+  if (!confirm('Delete asset ' + assetId + '?')) return;
+  try {
+    const resp = await api('/live-assets/delete', { method: 'POST', body: JSON.stringify({ assetId }) });
+    if (resp.deleted) {
+      if (lastGeneratedAsset?.assetId === assetId) {
+        lastGeneratedAsset = null;
+        renderGeneratedAsset();
+      }
+      showToast('Deleted: ' + assetId, false);
+      currentTrace = null;
+      renderTrace();
+      refresh();
+    } else {
+      showToast('Delete failed: ' + (resp.error || 'unknown'), true);
+    }
+  } catch(e) { showToast('Error: ' + e.message, true); }
+}
+
+function renderTrace() {
+  const el = document.getElementById('chat-trace');
+  if (!currentTrace || !currentTrace.matched) { el.innerHTML = ''; return; }
+  const t = currentTrace;
+  let html = '<div class="trace">';
+  html += '<div class="trace-header"><span class="trace-badge">' + escHtml(t.assetId) + ' v' + t.version + '</span>'
+    + '<button class="trace-delete" onclick="deleteAsset(\'' + escHtml(t.assetId) + '\')">Delete</button></div>';
+
+  if (t.firedInputRules?.length) {
+    html += '<div class="trace-section"><h3>Fired Rules</h3>';
+    t.firedInputRules.forEach(r => html += '<span class="trace-rule">' + escHtml(r) + '</span> ');
+    html += '</div>';
+  }
+  if (t.processConstraints?.length) {
+    html += '<div class="trace-section"><h3>Process Rules</h3>';
+    t.processConstraints.forEach(c => {
+      const cls = c.then.startsWith('require') ? 'require' : 'forbid';
+      html += '<span class="trace-constraint ' + cls + '">' + escHtml(c.then) + '</span> ';
+    });
+    html += renderConstraintDetails('Why these rules apply', t.processConstraints);
+    html += '</div>';
+  }
+  if (t.tools?.length) {
+    html += '<div class="trace-section"><h3>Tools</h3>';
+    t.tools.forEach(tl => html += '<code class="trace-tool">' + escHtml(tl) + '</code> ');
+    html += '</div>';
+  }
+  if (t.outputRules?.length) {
+    html += '<div class="trace-section"><h3>Output Checks</h3>';
+    t.outputRules.forEach(r => html += '<code class="trace-rule">' + escHtml(r.check) + '</code> ');
+    html += '</div>';
+  }
+  if (t.inputAugmentation) {
+    html += '<details class="trace-section"><summary onclick="event.stopPropagation()"><h3 style="display:inline">Input Augmentation</h3></summary><pre style="white-space:pre-wrap;font-size:0.8rem;margin-top:0.25rem">' + escHtml(t.inputAugmentation) + '</pre></details>';
+  }
+  if (t.assetJson) {
+    html += renderAssetJson(t.assetJson);
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderSessionProcessEvents(events) {
+  const processEvents = (events || []).filter(event =>
+    event?.kind === 'tool_blocked'
+    || event?.kind === 'tool_blocked_by_require'
+    || event?.kind === 'process_requirement_blocked'
+    || event?.kind === 'tool_ok'
+    || event?.kind === 'tool_error'
+  );
+  if (!processEvents.length) return '';
+  return '<details class="session-details"><summary onclick="event.stopPropagation()">Recent Process Events (' + processEvents.length + ')</summary>'
+    + processEvents.slice(-3).reverse().map(event => {
+      const title = event.kind === 'tool_blocked'
+        ? 'Blocked tool: ' + (event.tool || 'unknown')
+        : event.kind === 'tool_blocked_by_require'
+          ? 'Blocked by require: ' + (event.tool || 'unknown')
+          : event.kind === 'process_requirement_blocked'
+            ? 'Blocked final reply'
+            : event.kind === 'tool_ok'
+              ? 'Tool succeeded: ' + (event.tool || 'unknown')
+              : 'Tool failed: ' + (event.tool || 'unknown');
+      const missing = event.pendingTools?.length
+        ? '<div class="session-event-meta">Missing tools: ' + event.pendingTools.map(tool => '<code>' + escHtml(tool) + '</code>').join(' ') + '</div>'
+        : '';
+      const state = (event.require?.length || event.forbid?.length)
+        ? '<div class="session-event-meta">'
+          + (event.require?.length ? 'Require: ' + event.require.map(tool => '<code>' + escHtml(tool) + '</code>').join(' ') : '')
+          + ((event.require?.length && event.forbid?.length) ? ' | ' : '')
+          + (event.forbid?.length ? 'Forbid: ' + event.forbid.map(tool => '<code>' + escHtml(tool) + '</code>').join(' ') : '')
+          + '</div>'
+        : '';
+      return '<div class="session-event">'
+        + '<div class="session-event-title">' + escHtml(title) + '</div>'
+        + (event.reason ? '<div class="session-event-meta">Reason: ' + escHtml(event.reason) + '</div>' : '')
+        + (event.message ? '<div class="session-event-meta">Message: ' + escHtml(event.message) + '</div>' : '')
+        + missing
+        + state
+        + renderConstraintDetails('Triggered Rules', event.constraintDetails || [], { className: 'trace-details' })
+        + '</div>';
+    }).join('')
+    + '</details>';
+}
+
+async function toggleBaseline() {
+  const checked = document.getElementById('baseline-check').checked;
+  const box = document.getElementById('baseline-box');
+  if (!checked) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = '<em>Loading baseline...</em>';
+  const userMsgs = messages.filter(m => m.role === 'user');
+  if (!userMsgs.length) { box.innerHTML = 'No user messages'; return; }
+  try {
+    const data = await api('/live-assets/baseline', {
+      method: 'POST',
+      body: JSON.stringify({
+        agentId: UI_AGENT_ID,
+        sessionKey: uiSessionKey,
+        messages: [userMsgs[userMsgs.length - 1]],
+      }),
+    });
+    box.innerHTML = '<div class="baseline-box">' + escHtml(data.output || '') + '</div>';
+  } catch(e) { box.innerHTML = 'Error: ' + e.message; }
+}
+
+function showToast(text, isError) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:1rem;right:1rem;padding:0.75rem 1.25rem;border-radius:8px;font-size:0.9rem;z-index:999;max-width:400px;animation:fade-in 200ms ease-out;'
+    + (isError ? 'background:#fed7d7;color:#742a2a;border:1px solid #fc8181;' : 'background:#c6f6d5;color:#22543d;border:1px solid #68d391;');
+  toast.textContent = text;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), isError ? 8000 : 4000);
+}
+
+async function saveAsAsset() {
+  if (messages.length < 2) { showToast('At least 2 messages needed', true); return; }
+  const btn = document.getElementById('save-btn');
+  btn.textContent = 'Generating LiveAsset...';
+  btn.disabled = true;
+  showToast('Generating LiveAsset from conversation... Match Agent + Control Agent running.', false);
+  try {
+    const resp = await api('/live-assets/generate', {
+      method: 'POST',
+      body: JSON.stringify({ sessionKey: uiSessionKey, messages }),
+    });
+    if (resp.ok) {
+      lastGeneratedAsset = resp.asset || null;
+      renderGeneratedAsset();
+      showToast('LiveAsset saved: ' + resp.assetId, false);
+      refresh();
+    } else {
+      lastGeneratedAsset = null;
+      renderGeneratedAsset();
+      showToast('Generate failed: ' + (resp.error || JSON.stringify(resp)), true);
+    }
+  } catch(e) { showToast('Error: ' + e.message, true); }
+  btn.textContent = 'Save as Asset';
+  btn.disabled = false;
+}
+
+async function loadAssets() {
+  const el = document.getElementById('assets-list');
+  el.innerHTML = '<em>Loading...</em>';
+  try {
+    loadedAssets = await api('/live-assets/assets');
+    el.innerHTML = loadedAssets.map(a => renderAssetCard(a, { editable: true })).join('');
+  } catch(e) { el.innerHTML = 'Error: ' + e.message; }
+}
+
+async function loadSessions() {
+  const el = document.getElementById('sessions-list');
+  el.innerHTML = '<em>Loading...</em>';
+  try {
+    const sessions = await api('/live-assets/sessions');
+    if (!sessions.length) { el.innerHTML = '<em>No active sessions</em>'; return; }
+    el.innerHTML = sessions.map(s => {
+      let html = '<div class="session-card">';
+      html += '<div><strong>' + escHtml(s.activeAsset || 'none') + '</strong> <span style="font-size:0.8rem;color:var(--muted)">' + escHtml(s.key?.slice(0,8)||'') + '</span></div>';
+      if (s.done?.length) html += '<div>Done: ' + s.done.map(d => '<span class="session-badge done">' + escHtml(d) + '</span>').join(' ') + '</div>';
+      if (s.constraints?.require?.length) html += '<div>Require: ' + s.constraints.require.map(r => '<span class="trace-constraint require">' + escHtml(r) + '</span>').join(' ') + '</div>';
+      if (s.constraints?.forbid?.length) html += '<div>Forbid: ' + s.constraints.forbid.map(f => '<span class="trace-constraint forbid">' + escHtml(f) + '</span>').join(' ') + '</div>';
+      html += renderConstraintDetails('Active Process Rules', s.activeConstraintDetails || [], { className: 'session-details' });
+      html += renderSessionProcessEvents(s.events);
+      if (s.log?.length) {
+        html += '<div style="margin-top:0.3rem">';
+        s.log.forEach(e => html += '<span class="log-entry ' + (e.ok?'log-ok':'log-err') + '">' + (e.ok?'✓':'✗') + escHtml(e.tool) + ' </span>');
+        html += '</div>';
+      }
+      return html + '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = 'Error: ' + e.message; }
+}
+
+refresh();
+</script>
+</body>
+</html>

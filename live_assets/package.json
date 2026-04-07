@@ -1,0 +1,27 @@
+{
+  "name": "live-assets",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "OpenClaw-LiveAsset — OpenClaw plugin that transforms user corrections into executable behavioral rules.",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:ts": "node --import tsx --test test/*.test.ts",
+    "test:py": ".venv/bin/python -B -m unittest discover -s test -p '*_test.py'",
+    "test": "pnpm run typecheck && pnpm run test:ts && pnpm run test:py"
+  },
+  "dependencies": {
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.3"
+  },
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
+}

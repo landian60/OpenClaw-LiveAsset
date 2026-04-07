@@ -1,0 +1,65 @@
+{
+  "assetId": "product-comparison-search-zh",
+  "scenarioId": "comparison_before_recommendation",
+  "matching": {
+    "any": [
+      "sony wh-1000xm5",
+      "bose qc45",
+      "价格",
+      "评价"
+    ],
+    "all": [
+      "比较"
+    ],
+    "not": [
+      "机票",
+      "酒店",
+      "行程预订"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "请先搜索，把它们并排比较，再把对比结果写下来给我看，最后再给推荐。",
+      "example": {
+        "user": [
+          "比较 Sony WH-1000XM5 和 Bose QC45 的价格和评价，再给推荐。",
+          "先搜索，给我一个简短的对比表，再给推荐。"
+        ],
+        "assistant": "我会先搜索 Sony WH-1000XM5 和 Bose QC45，保存一个简短的对比表，并在展示价格和来源之后再给出推荐。"
+      }
+    },
+    {
+      "check": "contains:价格",
+      "inject": "请把价格并排列出来。"
+    },
+    {
+      "check": "contains:评价",
+      "inject": "请把评价和来源整理成一个简短表格。"
+    },
+    {
+      "check": "contains:推荐",
+      "inject": "请在展示完并排对比之后再给推荐。"
+    }
+  ],
+  "processControl": [
+    {
+      "when": "!done:web_search",
+      "then": "require:web_search",
+      "reason": "用户要的是基于当前信息的比较，因此必须先搜索。"
+    }
+  ],
+  "outputControl": [
+    {
+      "check": "contains:价格",
+      "rewrite": "输出里必须体现价格信息。"
+    },
+    {
+      "check": "contains:http",
+      "rewrite": "对比结果里必须包含来源链接。"
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 95
+}

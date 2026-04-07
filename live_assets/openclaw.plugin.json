@@ -1,0 +1,28 @@
+{
+  "id": "live-assets",
+  "name": "OpenClaw-LiveAsset",
+  "description": "OpenClaw-LiveAsset — transforms user corrections into executable behavioral rules for LLM agents. Matching → Input Control → Process Control (state machine) → Output Control → Validation/Update.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "assetsDir": {
+        "type": "string"
+      },
+      "pythonBin": {
+        "type": "string"
+      }
+    }
+  },
+  "uiHints": {
+    "assetsDir": {
+      "label": "Assets Directory",
+      "help": "Path to JSON asset files. Defaults to $OPENCLAW_STATE_DIR/live-assets."
+    },
+    "pythonBin": {
+      "label": "Python Binary",
+      "help": "Optional Python interpreter for LiveAssets scripts. Falls back to PYTHON_BIN, then python3."
+    }
+  }
+}

@@ -1,0 +1,26 @@
+name: Cache MyBinder
+on:
+  release:
+    types:
+      - published
+permissions:
+  contents: read
+jobs:
+  prefetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.x
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium # Install necessary browsers for Playwright
+      - name: Run upload.py script
+        run: |
+          python .github/cache_mybinder.py

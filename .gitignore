@@ -1,0 +1,12 @@
+.env
+.local/
+**/.DS_Store
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/node_modules/
+live_assets/.venv/
+openclaw/dist/
+openclaw/ui/dist/
+openclaw/ui/playwright-report/
+openclaw/ui/test-results/

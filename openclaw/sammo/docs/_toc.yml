@@ -1,0 +1,23 @@
+format: jb-book
+root: index
+parts:
+  - chapters:
+    - file: tutorials/quickstart
+  - caption: 🎓 Learning SAMMO
+    numbered: true
+    chapters:
+    - glob: tutorials/basics_*
+  - caption: 💡 Using SAMMO
+    numbered: true
+    chapters:
+    - glob: tutorials/example_*
+  - caption: 🔌 LLM APIs
+    chapters:
+    - glob: tutorials/special_topics/*
+  - caption: 📖 API Reference
+    chapters:
+    - file: api/sammo/sammo
+  - caption: ℹ️ Project Info
+    chapters:
+    - file: contributing
+    - file: release_history

@@ -1,0 +1,57 @@
+{
+  "assetId": "empathetic-response-zh",
+  "scenarioId": "empathetic_response",
+  "matching": {
+    "any": [
+      "沮丧",
+      "低落",
+      "难受",
+      "撑不住"
+    ],
+    "all": [],
+    "not": [
+      "推荐产品",
+      "比较价格",
+      "邮件草稿"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "请先理解和回应我的感受，不要立刻分析问题或给我建议。",
+      "example": {
+        "user": [
+          "我今天特别沮丧，感觉很多事都压在一起。",
+          "你先共情一下就好，不要给我建议。"
+        ],
+        "assistant": "听起来你今天真的很压抑，也有点被很多事情一起压住了。我能理解这种一下子缓不过来的感觉。"
+      }
+    },
+    {
+      "check": "contains:沮丧",
+      "inject": "请先直接回应我现在低落和压抑的感觉。"
+    },
+    {
+      "check": "contains:撑不住",
+      "inject": "请先回应我现在快撑不住的疲惫和压力。"
+    },
+    {
+      "check": "contains:难受",
+      "inject": "请先承接我现在难受和压抑的感觉。"
+    }
+  ],
+  "processControl": [],
+  "outputControl": [
+    {
+      "check": "!contains:你应该",
+      "rewrite": "不要把回复改写成建议或指导。"
+    },
+    {
+      "check": "!contains:建议你",
+      "rewrite": "不要把回复改写成建议。"
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 93
+}

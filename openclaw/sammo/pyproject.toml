@@ -1,0 +1,90 @@
+[tool.poetry]
+name = "sammo"
+version = "0.3.3"
+description = "A flexible, easy-to-use library for running and optimizing prompts for Large Language Models (LLMs)."
+authors = ["Tobias Schnabel"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/microsoft/sammo/"
+documentation = "https://microsoft.github.io/sammo/docs/"
+packages = [
+    { include = "sammo" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9,<3.13"
+beartype = "^0.15"
+benepar = {version = "^0.2", optional = true}
+filelock = "^3.12"
+frozendict = "^2.3"
+jsonpath_ng = "^1.5"
+markdown-it-py = "^2.2"
+more-itertools = "^10.1"
+numpy = "^1.25"
+orjson = "^3.9"
+pybars3 = "^0.9"
+pyglove = "^0.4"
+spacy = "^3.6"
+tabulate = "^0.9"
+xmltodict = "^0.13"
+PyYAML = "^6.0"
+aiohttp = "^3.6"
+diskcache = "^5.2"
+dill = "^0.3"
+quattro = "^24"
+async-timeout = "^4.0.3"
+lxml = "^5.3"
+cssselect = "^1.2"
+mistletoe = "^1.4"
+
+[tool.poetry.extras]
+parser = ["benepar"]
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4"
+pytest-skip-slow = "*"
+pytest-mock = "*"
+pytest-asyncio = "*"
+black = "^23"
+pandas = "*"
+pre-commit = "^3.6.0"
+mypy = "^1.8.0"
+poethepoet = "^0.24.4"
+jupyter-book = "^0.15"
+astroid = "^3.0.2"
+sphinx-autodoc2 = "*"
+jupyterlab = "^4.0"
+poetry-core = "^1.8.1"  # (see set_version.py)
+
+[tool.black]
+line-length = 120
+
+[tool.poe.tasks.build-docs]
+help = "Build the documentation site"
+cmd = "jb build --path-output _build_docs docs"
+
+[tool.poe.tasks.serve-docs]
+help = "Preview the documentation site using python's built-in http server"
+cmd = "python -m http.server -d _build_docs/_build/html/"
+
+[tool.poe.tasks.type-check]
+help = "Run static type checking"
+cmd = "mypy sammo"
+
+[tool.poe.tasks.test]
+help = "Run tests"
+cmd = "pytest"
+
+[tool.poe.tasks.pre-commit]
+help = "Run all pre-commit checks"
+cmd = "pre-commit run --all --show-diff-on-failure --color=always"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

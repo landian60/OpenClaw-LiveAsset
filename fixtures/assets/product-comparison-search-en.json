@@ -1,0 +1,65 @@
+{
+  "assetId": "product-comparison-search-en",
+  "scenarioId": "comparison_before_recommendation",
+  "matching": {
+    "any": [
+      "sony wh-1000xm5",
+      "bose qc45",
+      "price",
+      "reviews"
+    ],
+    "all": [
+      "compare"
+    ],
+    "not": [
+      "flight",
+      "hotel",
+      "travel booking"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "Please search first, compare them side by side, write down the comparison, and only then make a recommendation.",
+      "example": {
+        "user": [
+          "Compare Sony WH-1000XM5 and Bose QC45 on price and reviews before recommending one.",
+          "Search first, show me a short table, and only then recommend one."
+        ],
+        "assistant": "I will search for Sony WH-1000XM5 and Bose QC45 first, save a short comparison table with prices and source links, and only recommend after showing the side-by-side comparison."
+      }
+    },
+    {
+      "check": "contains:price",
+      "inject": "Please show prices side by side."
+    },
+    {
+      "check": "contains:reviews",
+      "inject": "Please compare reviews in a short table with sources."
+    },
+    {
+      "check": "contains:recommend",
+      "inject": "Please recommend only after showing the side-by-side comparison."
+    }
+  ],
+  "processControl": [
+    {
+      "when": "!done:web_search",
+      "then": "require:web_search",
+      "reason": "The user asked for comparison grounded in current options, so the agent must search before answering."
+    }
+  ],
+  "outputControl": [
+    {
+      "check": "contains:Price",
+      "rewrite": "Include price information in the comparison."
+    },
+    {
+      "check": "contains:http",
+      "rewrite": "Include source URLs in the comparison output."
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 95
+}

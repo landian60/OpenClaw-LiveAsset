@@ -1,0 +1,3 @@
+- 改后端 / Gateway 逻辑：cd /home/liu/openclaw && pnpm build && systemctl --user restart openclaw-gateway.service
+- 改 Web / Control UI：cd /home/liu/openclaw && pnpm ui:build && systemctl --user restart openclaw-gateway.service
+- 只想本地调 UI 热更新：cd /home/liu/openclaw && pnpm ui:dev，但这走的是单独 dev server，不是你现在默认访问的那套服务页面。

@@ -1,0 +1,75 @@
+{
+  "assetId": "advisor-email-draft-zh",
+  "scenarioId": "email_draft_review",
+  "matching": {
+    "any": [
+      "导师",
+      "教授"
+    ],
+    "all": [
+      "邮件"
+    ],
+    "not": [
+      "机票",
+      "酒店",
+      "行程",
+      "预订"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "请先读取相关背景，再把邮件草稿写下来给我确认，不要直接发送。",
+      "example": {
+        "user": [
+          "给导师写一封邮件说明这周实验修订进展。",
+          "语气正式一点，控制在三小段，发送前先给我看草稿。"
+        ],
+        "assistant": "邮件草稿：\n主题：本周实验修订进展更新\n正文：\n尊敬的 Mario 教授，\n\n我已经完成本周实验部分的主要修订，并更新了方法与结果部分的相关内容。当前版本已经整理完毕，想先请您审阅。\n\n如果您方便的话，我想约一个简短时间和您讨论剩余问题，并确认下一步修改计划。我也会根据您的反馈继续完善稿件。\n\n此致\n敬礼\n[你的名字]\n\n请先确认后再发送。"
+      }
+    },
+    {
+      "check": "contains:导师",
+      "inject": "请使用正式的学术语气，并清楚写出我的进展和下一步请求。"
+    },
+    {
+      "check": "contains:教授",
+      "inject": "请在称呼里使用对方的职称和姓氏。"
+    },
+    {
+      "check": "!contains:详细",
+      "inject": "请控制在三小段以内，不要写得太啰嗦。"
+    }
+  ],
+  "processControl": [
+    {
+      "when": "!done:read",
+      "then": "require:read",
+      "reason": "写邮件前先读取相关背景，避免称呼、进展和请求写错。"
+    },
+    {
+      "when": "!done:read",
+      "then": "forbid:write",
+      "reason": "未读取源上下文前不要写入草稿。"
+    },
+    {
+      "when": {
+        "AND": [
+          "done:read",
+          "!done:write"
+        ]
+      },
+      "then": "require:write",
+      "reason": "先把草稿写下来再回复，用户才能基于具体内容确认。"
+    }
+  ],
+  "outputControl": [
+    {
+      "check": "!contains:已发送",
+      "rewrite": "不要声称邮件已经发送。"
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 96
+}

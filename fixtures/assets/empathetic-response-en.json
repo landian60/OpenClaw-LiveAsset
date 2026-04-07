@@ -1,0 +1,57 @@
+{
+  "assetId": "empathetic-response-en",
+  "scenarioId": "empathetic_response",
+  "matching": {
+    "any": [
+      "overwhelmed",
+      "frustrated",
+      "drained",
+      "can't handle it"
+    ],
+    "all": [],
+    "not": [
+      "recommend a product",
+      "compare prices",
+      "draft email"
+    ]
+  },
+  "inputControl": [
+    {
+      "check": "",
+      "inject": "Please respond with empathy first and do not turn this into advice or a fix-it plan.",
+      "example": {
+        "user": [
+          "I'm feeling really overwhelmed today.",
+          "Please just respond with empathy and don't give me advice."
+        ],
+        "assistant": "That sounds exhausting. I'm sorry this week feels so heavy, and I can see why you're overwhelmed."
+      }
+    },
+    {
+      "check": "contains:overwhelmed",
+      "inject": "Please first acknowledge how heavy this feels."
+    },
+    {
+      "check": "contains:frustrated",
+      "inject": "Please first acknowledge how discouraging this feels."
+    },
+    {
+      "check": "contains:drained",
+      "inject": "Please respond to how exhausted I feel before saying anything else."
+    }
+  ],
+  "processControl": [],
+  "outputControl": [
+    {
+      "check": "!contains:you should",
+      "rewrite": "Do not turn the response into advice or instructions."
+    },
+    {
+      "check": "!contains:I recommend",
+      "rewrite": "Do not make recommendations."
+    }
+  ],
+  "tools": [],
+  "version": 1,
+  "utilityScore": 93
+}
