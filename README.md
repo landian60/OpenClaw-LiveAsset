@@ -21,7 +21,7 @@
 </p>
 
 <p>
-  <video src="[docs/liveassets_demo.mp4](https://github.com/user-attachments/assets/490add0d-02b4-4dbd-93fb-a52658049929)" controls width="600"></video>
+  <video src="https://github.com/user-attachments/assets/490add0d-02b4-4dbd-93fb-a52658049929" controls width="600"></video>
 </p>
 
 </div>
