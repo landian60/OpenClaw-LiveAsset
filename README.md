@@ -38,7 +38,7 @@
 
 **OpenClaw-LiveAsset** compiles interactive user guidance into visible, editable runtime assets that serve as executable procedural memory for personal agents.
 
-Each LiveAsset is a bounded procedural asset that encodes matching conditions, input control, process control, and output control, so user corrections persist across sessions and are enforced deterministically at runtime. When users provide follow-up feedback, LiveAssets updates the asset, runs it again on the original query in OpenClaw, and checks whether the new result actually fixes the problem. The overall design is inspired by ACT-R procedural memory.
+Each LiveAsset is a bounded procedural asset that encodes matching conditions, input control, process control, and output control, so user corrections persist across sessions and are enforced deterministically at runtime. When users provide follow-up feedback, LiveAssets updates the asset, runs it again on the original query in OpenClaw, and checks whether the new result actually fixes the problem. The overall design is inspired by [ACT-R](http://act-r.psy.cmu.edu/wordpress/wp-content/uploads/2012/12/526FSQUERY.pdf).
 
 This repository packages a runnable [OpenClaw](https://openclaw.ai) snapshot together with the LiveAsset plugin. `openclaw/` is the upstream runtime. `live_assets/` is the plugin. All local state lives under `.local/`.
 
