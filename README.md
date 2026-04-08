@@ -4,6 +4,8 @@
 
 # LiveAssets: Compiling Interactive Guidance into Executable Procedural Memory for Personal Agents
 
+English | [中文](./README.zh-CN.md)
+
 <br/>
 <img src="docs/openclaw-liveasset-introduction.png" alt="OpenClaw-LiveAsset" width="700">
 
@@ -129,7 +131,6 @@ After startup, the terminal prints the local Control UI and LiveAssets URLs. The
 OpenClaw-LiveAsset builds on top of:
 
 - [OpenClaw](https://openclaw.ai) — the core personal AI assistant framework.
-
 ---
 
 ## Citation
